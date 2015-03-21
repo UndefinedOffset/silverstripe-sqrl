@@ -5,16 +5,19 @@ class SQRLNonce extends DataObject {
                             'IP'=>'Varchar',
                             'Action'=>'Varchar',
                             'Related_Public_Key'=>'Varchar(44)',
-                            'Verified'=>'Boolean'
+                            'Verified'=>'Boolean',
+                            'KillSession'=>'Boolean',
+                            'OrigNonce'=>'Varchar(64)'
                          );
     
     
     private static $defaults=array(
-                                    'Verified'=>false
+                                    'Verified'=>false,
+                                    'KillSession'=>false
                                 );
     
     private static $indexes=array(
-                                'Nonce'=>true
+                                'Nonce'=>array('type'=>'unique', 'value'=>'Nonce')
                             );
     
     public function PublicKey() {

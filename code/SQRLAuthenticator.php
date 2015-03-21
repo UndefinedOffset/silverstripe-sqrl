@@ -3,6 +3,13 @@ use Trianglman\Sqrl\SqrlGenerate;
 use Trianglman\Sqrl\SqrlRequestHandlerInterface;
 
 class SQRLAuthenticator extends MemberAuthenticator {
+    private static $UseSecure=true;
+    private static $KeyDomain=null;
+    private static $NonceSalt=null;
+    private static $NonceMaxAge=60; //5;
+    private static $QRHeight=300;
+    private static $QRPadding=10;
+    
     private static $_sqrl=false;
     
     /**
@@ -17,7 +24,8 @@ class SQRLAuthenticator extends MemberAuthenticator {
         if(!empty($RAW_data['Email']) && !empty($RAW_data['Password'])) {
             return parent::authenticate($RAW_data, $form);
         }else {
-            $nonce=SQRLNonce::get()->filter('Nonce', Convert::raw2sql($RAW_data['SQRLNonce']))->first();
+            $nonce=SQRLNonce::get()->filter('Nonce', Convert::raw2sql(SilverStripeSQRLStore::create()->getSessionNonce()))->first();
+            var_dump($nonce->toMap());exit;
             if($nonce->Action==SqrlRequestHandlerInterface::USER_LOGGED_IN) {
                 if($nonce->PublicKey() && $nonce->PublicKey()->Member()) {
                     $nonce->PublicKey()->Member()->login();
@@ -58,11 +66,12 @@ class SQRLAuthenticator extends MemberAuthenticator {
      */
     public static function getSQRLConfig() {
         $sqrlConfig=new \Trianglman\Sqrl\SqrlConfiguration();
-        $sqrlConfig->setQrHeight(SQRLAuthenticator::config()->QRHeight);
-        $sqrlConfig->setQrPadding(SQRLAuthenticator::config()->QRPadding);
-        $sqrlConfig->setSecure(SQRLAuthenticator::config()->UseSecure);
+        $sqrlConfig->setQrHeight(self::config()->QRHeight);
+        $sqrlConfig->setQrPadding(self::config()->QRPadding);
+        $sqrlConfig->setSecure(self::config()->UseSecure);
+        $sqrlConfig->setNonceMaxAge(self::config()->NonceMaxAge);
         $sqrlConfig->setDomain(parse_url(Director::absoluteBaseURL(), PHP_URL_HOST));
-        $sqrlConfig->setAuthenticationPath(substr(parse_url(Director::absoluteBaseURL(), PHP_URL_PATH), 1).'SQRLAuthentication/authenticate');
+        $sqrlConfig->setAuthenticationPath(parse_url(Director::absoluteBaseURL(), PHP_URL_PATH).'SQRLAuthentication/authenticate');
         $sqrlConfig->setAnonAllowed(true);
         $sqrlConfig->setFriendlyName((class_exists('SiteConfig') ? SiteConfig::get()->first()->Title:'SilverStripe'));
         
@@ -83,7 +92,6 @@ class SQRLAuthenticator extends MemberAuthenticator {
     public static function getSQRL() {
         if(self::$_sqrl===false) {
             self::$_sqrl=new \Trianglman\Sqrl\SqrlGenerate(self::getSQRLConfig(), new SilverStripeSQRLStore());
-            self::$_sqrl->setRequestorIp($_SERVER['REMOTE_ADDR']);
         }
         
         return self::$_sqrl;

@@ -43,8 +43,7 @@ class SQRLLoginForm extends MemberLoginForm {
                                                                 new TextField("Email", $label, Session::get('SessionForms.MemberLoginForm.Email'), null, $this),
                                                                 new PasswordField("Password", _t('Member.PASSWORD', 'Password'))
                                                             )->addExtraClass('standardLogin'),
-                                        new HiddenField("AuthenticationMethod", null, $this->authenticator_class, $this),
-                                        new HiddenField('SQRLNonce', 'SQRLNonce', $sqrlNonce)
+                                        new HiddenField("AuthenticationMethod", null, $this->authenticator_class, $this)
                                     );
                 
                 if(Security::config()->autologin_enabled) {

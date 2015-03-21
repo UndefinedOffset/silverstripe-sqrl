@@ -36,11 +36,23 @@ class SQRLAuthentication extends Controller {
         $sqrlConfig=SQRLAuthenticator::getSQRLConfig();
         $sqrlStore=new SilverStripeSQRLStore();
         
-        $validator=new \Trianglman\Sqrl\SqrlValidate($sqrlConfig, new \Trianglman\Sqrl\Ed25519NonceValidator(), $sqrlStore);
+        if(extension_loaded("ellipticCurveSignature")) {
+            $sigValidator=new \Trianglman\Sqrl\EcEd25519NonceValidator();
+        }else {
+            $sigValidator=new \Trianglman\Sqrl\Ed25519NonceValidator();
+        }
+        
+        $validator=new \Trianglman\Sqrl\SqrlValidate($sqrlConfig, $sigValidator, $sqrlStore);
         
         //initialize the request handler
         $requestResponse=new \Trianglman\Sqrl\SqrlRequestHandler($sqrlConfig, $validator, $sqrlStore, SQRLAuthenticator::getSQRL());
-        $requestResponse->parseRequest($this->request->getVars(), $this->request->postVars(), $_SERVER);
+        
+        $postData=$this->request->postVars();
+        if(empty($postData)) {
+            parse_str(file_get_contents('php://input'), $postData);
+        }
+        
+        $requestResponse->parseRequest($this->request->getVars(), $postData, $_SERVER);
         
         
         //Send Response
