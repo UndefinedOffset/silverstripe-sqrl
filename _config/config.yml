@@ -1,0 +1,14 @@
+---
+Name: sqrl_authenticator
+After: 
+    - 'framework/*'
+    - 'cms/*'
+---
+SQRLAuthenticator:
+    UseSecure: true
+    KeyDomain: null
+    NonceSalt: null
+    NonceMaxAge: 60 #5
+    QRHeight: 300
+    QRPadding: 10
+    

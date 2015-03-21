@@ -1,0 +1,26 @@
+{
+	"name": "undefinedoffset/silverstripe-sqrlauth",
+	"description": "@TODO",
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe", "keyboard", "shortcuts"],
+    "license": "BSD-3-Clause",
+	"authors": [
+		{
+			"name": "Ed Chipman",
+			"homepage": "http://www.edchipman.ca",
+			"role": "Developer"
+		}
+	],
+	"require":
+	{
+		"silverstripe/framework": "~3.1",
+		"composer/installers": "*",
+        "trianglman/sqrl": "*"
+	},
+	"support": {
+		"issues": "https://github.com/undefinedoffset/silverstripe-sqrlauth/issues"
+	},
+	"extra": {
+		"installer-name": "sqrl"
+	}
+}

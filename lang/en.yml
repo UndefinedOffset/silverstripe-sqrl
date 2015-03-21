@@ -1,0 +1,5 @@
+en:
+    SQRLAuthenticator:
+        NAME: "SQRL"
+    SQRLLoginForm:
+        BUTTONLOSTPASSWORD: "Recover my Account, I've lost my authenticator or Password"
