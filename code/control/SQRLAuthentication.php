@@ -1,7 +1,4 @@
 <?php
-use Trianglman\Sqrl\SqrlValidate;
-use Tingleman\Sqrl\SqrlConfiguration;
-
 class SQRLAuthentication extends Controller {
     private static $allowed_actions=array(
                                         'authenticate',
@@ -13,6 +10,10 @@ class SQRLAuthentication extends Controller {
         if(empty($this->urlParams['ID'])) {
             return $this->httpError(403);
         }
+        
+        
+        //Clear expired nuts
+        SQRLNonce::get()->filter('Created:LessThan', date('Y-m-d h:i:s', strtotime('-'.SQRLAuthenticator::config()->NonceMaxAge.' minutes')))->removeAll();
         
         //Disable ContentNegotiator
         $previousSetting=Config::inst()->get('ContentNegotiator', 'enabled');

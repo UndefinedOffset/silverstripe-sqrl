@@ -8,7 +8,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return void
      */
     public function updateIdentityKey($oldKey, $newKey) {
-        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($oldKey));
+        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($oldKey))->first();
         if(!empty($key) && $key!==false && $key->ID>0) {
             $key->Public_Key=$newKey;
             $key->write();
@@ -22,7 +22,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return int One of the class key status constants
      */
     public function checkIdentityKey($key) {
-        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key));
+        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key))->first();
         if(!empty($key) && $key!==false && $key->ID>0) {
             return ($key->Disabled==true ? self::IDENTITY_LOCKED:self::IDENTITY_ACTIVE);
         }
@@ -37,14 +37,14 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return void
      */
     public function logSessionIn($requestNut) {
-        $key=SQRLNonce::get()->filterAny(array(
+        $nonce=SQRLNonce::get()->filterAny(array(
                                                 'Nonce'=>Convert::raw2sql($requestNut),
                                                 'OrigNonce'=>Convert::raw2sql($requestNut)
-                                            ));
+                                            ))->first();
         
-        if(!empty($key) && $key!==false && $key->ID>0) {
-            $key->Verified=true;
-            $key->write();
+        if(!empty($nonce) && $nonce!==false && $nonce->ID>0) {
+            $nonce->Verified=true;
+            $nonce->write();
         }
     }
     
@@ -61,13 +61,13 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * 'sessionId'=> string the session ID for the nut [this is only required in stateless nuts]
      */
     public function getNutDetails($nut) {
-        $key=SQRLNonce::get()->filter('Nonce', Convert::raw2sql($requestNut));
-        if(!empty($key) && $key!==false && $key->ID>0) {
+        $nonce=SQRLNonce::get()->filter('Nonce', Convert::raw2sql($nut))->first();
+        if(!empty($nonce) && $nonce!==false && $nonce->ID>0) {
             return array(
                         'tif'=>$nonce->Action,
                         'originalKey'=>$nonce->Related_Public_Key,
                         'originalNut'=>$nonce->OrigNonce,
-                        'createdDate'=>new \DateTime($nonce->Created),
+                        'createdDate'=>new DateTime($nonce->Created),
                         'nutIP'=>$nonce->IP
                     );
         }
@@ -83,10 +83,10 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return void
      */
     public function endSession($requestNut) {
-        $key=SQRLNonce::get()->filter('Nonce', Convert::raw2sql($requestNut));
-        if(!empty($key) && $key!==false && $key->ID>0) {
-            $key->KillSession=true;
-            $key->write();
+        $nonce=SQRLNonce::get()->filter('Nonce', Convert::raw2sql($requestNut))->first();
+        if(!empty($nonce) && $nonce!==false && $nonce->ID>0) {
+            $nonce->KillSession=true;
+            $nonce->write();
         }
     }
     
@@ -97,7 +97,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return void
      */
     public function unlockIdentityKey($key) {
-        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key));
+        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key))->first();
         if(!empty($key) && $key!==false && $key->ID>0) {
             $key->Disabled=false;
             $key->write();
@@ -110,7 +110,11 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return string
      */
     public function getSessionNonce() {
-        return Session::get('SQRL.nut');
+        if(Session::get('SQRL.nut')!=null) {
+            return Session::get('SQRL.nut');
+        }else if(Controller::has_curr() && Controller::curr()->getRequest()->getVar('nut')!=null) {
+            return Controller::curr()->getRequest()->getVar('nut');
+        }
     }
     
     /**
@@ -120,7 +124,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return string The VUK value
      */
     public function getIdentityVUK($key) {
-        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key));
+        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key))->first();
         if(!empty($key) && $key!==false && $key->ID>0) {
             return $key->VUK;
         }
@@ -135,7 +139,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return string The SUK value
      */
     public function getIdentitySUK($key) {
-        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key));
+        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key))->first();
         if(!empty($key) && $key!==false && $key->ID>0) {
             return $key->SUK;
         }
@@ -158,6 +162,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
         $nonceObj->IP=(array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER) ? $_SERVER['HTTP_X_FORWARDED_FOR']:$_SERVER['REMOTE_ADDR']);
         $nonceObj->Action=$action;
         $nonceObj->Related_Public_Key=$key;
+        $nonceObj->OrigNonce=$previousNonce;
         $nonceObj->write();
         
         if(empty($previousNonce)) {
@@ -191,7 +196,7 @@ class SilverStripeSQRLStore extends Object implements Trianglman\Sqrl\SqrlStoreI
      * @return void
      */
     public function lockIdentityKey($key) {
-        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key));
+        $key=SQRLPublicKey::get()->filter('Public_Key', Convert::raw2sql($key))->first();
         if(!empty($key) && $key!==false && $key->ID>0) {
             $key->Disabled=true;
             $key->write();

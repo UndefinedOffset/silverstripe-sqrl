@@ -1,13 +1,14 @@
 <?php
 use Trianglman\Sqrl\SqrlGenerate;
 use Trianglman\Sqrl\SqrlRequestHandlerInterface;
+use Trianglman\Sqrl\SqrlValidate;
 
 class SQRLAuthenticator extends MemberAuthenticator {
     private static $UseSecure=true;
     private static $KeyDomain=null;
     private static $NonceSalt=null;
     private static $NonceMaxAge=60; //5;
-    private static $QRHeight=300;
+    private static $QRHeight=150;
     private static $QRPadding=10;
     
     private static $_sqrl=false;
@@ -25,8 +26,7 @@ class SQRLAuthenticator extends MemberAuthenticator {
             return parent::authenticate($RAW_data, $form);
         }else {
             $nonce=SQRLNonce::get()->filter('Nonce', Convert::raw2sql(SilverStripeSQRLStore::create()->getSessionNonce()))->first();
-            var_dump($nonce->toMap());exit;
-            if($nonce->Action==SqrlRequestHandlerInterface::USER_LOGGED_IN) {
+            if($nonce->Verified==true) {
                 if($nonce->PublicKey() && $nonce->PublicKey()->Member()) {
                     $nonce->PublicKey()->Member()->login();
                     return true;
@@ -36,22 +36,21 @@ class SQRLAuthenticator extends MemberAuthenticator {
                     return false;
                 }
             }else {
-                var_dump($nonce->Action, SqrlRequestHandlerInterface::USER_LOGGED_IN);exit;
-                $form->sessionMessage('Invalid Sqrl Response', 'bad');
+                $form->sessionMessage('Sqrl Response Not Verified', 'bad');
                 return false;
             }
         }
     }
     
-	/**
-	 * Method that creates the login form for this authentication method
-	 * @param {Controller} The parent controller, necessary to create the appropriate form action tag
-	 * @return {Form} Returns the login form to use with this authentication method
-	 */
-	public static function get_login_form(Controller $controller) {
-		return Object::create("SQRLLoginForm", $controller, "LoginForm");
-	}
-	
+    /**
+     * Method that creates the login form for this authentication method
+     * @param {Controller} The parent controller, necessary to create the appropriate form action tag
+     * @return {Form} Returns the login form to use with this authentication method
+     */
+    public static function get_login_form(Controller $controller) {
+        return Object::create("SQRLLoginForm", $controller, "LoginForm");
+    }
+    
     /**
      * Get the name of the authentication method
      * @return {string} Returns the name of the authentication method.
@@ -72,7 +71,6 @@ class SQRLAuthenticator extends MemberAuthenticator {
         $sqrlConfig->setNonceMaxAge(self::config()->NonceMaxAge);
         $sqrlConfig->setDomain(parse_url(Director::absoluteBaseURL(), PHP_URL_HOST));
         $sqrlConfig->setAuthenticationPath(parse_url(Director::absoluteBaseURL(), PHP_URL_PATH).'SQRLAuthentication/authenticate');
-        $sqrlConfig->setAnonAllowed(true);
         $sqrlConfig->setFriendlyName((class_exists('SiteConfig') ? SiteConfig::get()->first()->Title:'SilverStripe'));
         
         $salt=SQRLAuthenticator::config()->NonceSalt;
