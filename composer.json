@@ -1,8 +1,8 @@
 {
-	"name": "undefinedoffset/silverstripe-sqrlauth",
-	"description": "@TODO",
+	"name": "undefinedoffset/silverstripe-sqrl",
+	"description": "SilverStripe implementation of GRC's SQRL authentication system",
 	"type": "silverstripe-module",
-	"keywords": ["silverstripe", "keyboard", "shortcuts"],
+	"keywords": ["silverstripe", "security", "authentication", "sqrl"],
     "license": "BSD-3-Clause",
 	"authors": [
 		{
@@ -18,7 +18,7 @@
         "trianglman/sqrl": "*"
 	},
 	"support": {
-		"issues": "https://github.com/undefinedoffset/silverstripe-sqrlauth/issues"
+		"issues": "https://github.com/undefinedoffset/silverstripe-sqrl/issues"
 	},
 	"extra": {
 		"installer-name": "sqrl"
